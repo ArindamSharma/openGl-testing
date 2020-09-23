@@ -2,7 +2,6 @@
 #include<math.h>
 #include<vector>
 #include<GL/glut.h>
-#include<omp.h>
 
 #define ld long double
 #define ll long long
@@ -10,17 +9,18 @@
 #define Array2D(x) vector<Array1D(x)>
 #define Array3D(x) vector<Array2D(x)>
 
-#define PI 3.14159265
-#define deg *0.0174532925//(PI/180=0.0174532925)
-#include"colors.h"
+#define PI 3.14159265 //Value of PI
+#define deg *0.0174532925//Conversion to degree from radiant (PI/180=0.0174532925)
+#include"colors.h" //predefine custom colors library in same directory
 #define PPI 100//all 2 digit values
+
 using namespace std;
 
-//{height,width}
-int window_size[]={700,700};
-int viewport_size[]={650,650};
+int window_size[]={700,700};//Size of Window {height,width}
+int viewport_size[]={650,650};//Size of Viewport {height,width}
 
 Array1D(ld) rgb(int r, int g, int b){
+    /*Used for the pre define color Library */
     Array1D(ld) f;
     f.push_back((double)r/255.0);
     f.push_back((double)g/255.0);
@@ -109,42 +109,94 @@ public:
     ld Func(ld x,ld y){return (m*x)+c-y;}
 };
 
-void plotPoint(Array1D(ld) color,Array2D(ld) array,ld point_size=5,bool see_points=false){
+class Figure{
+private:
+    /* The function in this class plot with the points in range of -1.0 to 1.0 */
+public:
+    void Point(Array1D(ld) color,Array2D(ld) pointsArray,ld point_size=5,bool see_points=false){
+    /* The function in this class plot with the points in range of -1.0 to 1.0 */
+        glPointSize(point_size);
+        glBegin(GL_POINTS);//rect outline
+            glColor3f(color[0],color[1], color[2]);//color of outline of rect
+            for ( int i = 0; i < pointsArray.size(); i++ ){
+                glVertex2f(pointsArray[i][0],pointsArray[i][1]);
+            }
+        glEnd();
+        // glFlush();
+        if(see_points){
+            print2D(pointsArray);
+        }
+    }
+    void Line(Array1D(ld) color,Array2D(ld) pointsArray,ld line_width=5,bool see_points=false){
+    /* The function in this class plot with the points in range of -1.0 to 1.0 */
+        glLineWidth(line_width);
+        glBegin(GL_LINES);//rect outline
+            glColor3f(color[0],color[1], color[2]);//color of outline of rect
+            for ( int i = 0; i < pointsArray.size(); i++ ){
+                glVertex2f(pointsArray[i][0],pointsArray[i][1]);
+                // glVertex2fv((GLfloat *)&pointsArray[i]);
+            }
+        glEnd();
+        // glFlush();
+        if(see_points){
+            print2D(pointsArray);
+        }
+    }
+    void Polygon(Array1D(ld) color,Array2D(ld) pointsArray,bool see_points=false){
+    /* The function in this class plot with the points in range of -1.0 to 1.0 */
+        glBegin(GL_POLYGON);//rect outline
+            glColor3f(color[0],color[1], color[2]);//color of outline of rect
+            for ( int i = 0; i < pointsArray.size(); i++ ){
+                glVertex2f(pointsArray[i][0],pointsArray[i][1]);
+            }
+        glEnd();
+        // glFlush();
+        if(see_points){
+            print2D(pointsArray);
+        }
+    }
+};
+
+void plotPoint(Array1D(ld) color,Array2D(ld) pointsArray,ld point_size=5,bool see_points=false){
+    /* The function plot with the points in range of -PPI to PPI . Here PPI is the Global Variable*/
     glPointSize(point_size);
     glBegin(GL_POINTS);//rect outline
         glColor3f(color[0],color[1], color[2]);//color of outline of rect
-        for ( int i = 0; i < array.size(); i++ ){
-            glVertex2f(array[i][0]/PPI,array[i][1]/PPI);
+        for ( int i = 0; i < pointsArray.size(); i++ ){
+            glVertex2f(pointsArray[i][0]/PPI,pointsArray[i][1]/PPI);
         }
     glEnd();
     // glFlush();
-    if(see_points){print2D(array);}
+    if(see_points){print2D(pointsArray);}
 }
-void plotLine(Array1D(ld) color,Array2D(ld) array,ld line_width=5,bool see_points=false){
+void plotLine(Array1D(ld) color,Array2D(ld) pointsArray,ld line_width=5,bool see_points=false){
+    /* The function plot with the points in range of -PPI to PPI . Here PPI is the Global Variable*/
     glLineWidth(line_width);
     glBegin(GL_LINES);//rect outline
         glColor3f(color[0],color[1], color[2]);//color of outline of rect
-        for ( int i = 0; i < array.size(); i++ ){
-            glVertex2f(array[i][0]/PPI,array[i][1]/PPI);
-            // glVertex2fv((GLfloat *)&array[i]);
+        for ( int i = 0; i < pointsArray.size(); i++ ){
+            glVertex2f(pointsArray[i][0]/PPI,pointsArray[i][1]/PPI);
+            // glVertex2fv((GLfloat *)&pointsArray[i]);
         }
     glEnd();
     // glFlush();
-    if(see_points){print2D(array);}
+    if(see_points){print2D(pointsArray);}
 }
-void plotPolygon(Array1D(ld) color,Array2D(ld) array,bool see_points=false){
+void plotPolygon(Array1D(ld) color,Array2D(ld) pointsArray,bool see_points=false){
+    /* The function plot with the points in range of -PPI to PPI . Here PPI is the Global Variable*/
     glBegin(GL_POLYGON);//rect outline
         glColor3f(color[0],color[1], color[2]);//color of outline of rect
-        for ( int i = 0; i < array.size(); i++ ){
-            glVertex2f(array[i][0]/PPI,array[i][1]/PPI);
+        for ( int i = 0; i < pointsArray.size(); i++ ){
+            glVertex2f(pointsArray[i][0]/PPI,pointsArray[i][1]/PPI);
         }
     glEnd();
     // glFlush();
-    if(see_points){print2D(array);}
+    if(see_points){print2D(pointsArray);}
 }
-void plot_single_pixel(Array1D(ld) color,ld x,ld y,ld stepsize,bool see_points=false){
+
+void plotPoint_single(Array1D(ld) color,ld x,ld y,ld stepsize,bool see_points=false){
     ld half=(stepsize/2);
-    plotPolygon(color,{
+    Polygon(color,{
             {x-half,y-half},
             {x-half,y+half},
             {x+half,y+half},
@@ -152,19 +204,27 @@ void plot_single_pixel(Array1D(ld) color,ld x,ld y,ld stepsize,bool see_points=f
         });
     if(see_points){print1D(  {(ld)x,(ld)y} );}
 }
+
+void plotPoint_quad(Array1D(ld) color,Array1D(ld) center, ld x,ld y, ld stepsize,bool see_points=false){
+    plotPoint_single(color,x+center[0],y+center[1],stepsize,see_points);
+    plotPoint_single(color,-x+center[0],-y+center[1],stepsize,see_points);
+    plotPoint_single(color,-x+center[0],y+center[1],stepsize,see_points);
+    plotPoint_single(color,x+center[0],-y+center[1],stepsize,see_points);
+}
+
 void plotLine_DDA(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,bool see_points=false){
     /*Drawing line using DDA algorithm in and only for first octate*/
     LinearEquation eq(p1,p2);
     int x=round(p1[0]),y=round(p1[1]);
     ld xf=p1[0],yf=p1[1];
     
-    plot_single_pixel(color,x,y,stepsize,see_points);
+    plotPoint_single(color,x,y,stepsize,see_points);
     if(fabs(eq.m)<=1){
         while(x<p2[0]){
             x=x+stepsize;//stepsize should be 1
             yf=y+eq.m*stepsize;//stepsize should be 1
             y=round(yf);
-            plot_single_pixel(color,x,y,stepsize,see_points);
+            plotPoint_single(color,x,y,stepsize,see_points);
         }
     }
     else{
@@ -172,7 +232,7 @@ void plotLine_DDA(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,bo
             y=y+stepsize;//stepsize should be 1
             xf=x+(1.0/eq.m)*stepsize;//stepsize should be 1
             x=round(xf);
-            plot_single_pixel(color,x,y,stepsize,see_points);
+            plotPoint_single(color,x,y,stepsize,see_points);
         }
     }
 }
@@ -184,7 +244,7 @@ void plotLine_MLD(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,bo
     ld dE=(2*dy)*stepsize;
     ld dNE=2*(dy-dx)*stepsize;
     // plot
-    plot_single_pixel(color,x,y,stepsize,see_points);
+    plotPoint_single(color,x,y,stepsize,see_points);
     while (x<p2[0]){
         if(d<=0){
             d=d+dE;//  (/_\d)E = 2dy and stepsize should be 1
@@ -195,7 +255,7 @@ void plotLine_MLD(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,bo
         }
         x=x+(1*stepsize);//and stepsize should be 1
         // plot
-        plot_single_pixel(color,x,y,stepsize,see_points);
+        plotPoint_single(color,x,y,stepsize,see_points);
     }
 }
 void plotLine_MLD_modified(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,Array1D(ld) toggler,bool see_points=false){
@@ -206,7 +266,7 @@ void plotLine_MLD_modified(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld st
     ld dE=(2*dy)*stepsize;
     ld dNE=2*(dy-dx)*stepsize;
     // plot
-    plot_single_pixel(color,(toggler[0]*x+toggler[1]*y),(toggler[2]*x+toggler[3]*y),stepsize,see_points);
+    plotPoint_single(color,(toggler[0]*x+toggler[1]*y),(toggler[2]*x+toggler[3]*y),stepsize,see_points);
     while (x<p2[0]){
         if(d<=0){
             d=d+dE;//  (/_\d)E = 2dy and stepsize should be 1
@@ -217,7 +277,7 @@ void plotLine_MLD_modified(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld st
         }
         x=x+(1*stepsize);//and stepsize should be 1
         // plot
-        plot_single_pixel(color,(toggler[0]*x+toggler[1]*y),(toggler[2]*x+toggler[3]*y),stepsize,see_points);
+        plotPoint_single(color,(toggler[0]*x+toggler[1]*y),(toggler[2]*x+toggler[3]*y),stepsize,see_points);
     }
 }
 void plotLine_MLD_all(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsize,bool see_points=false){
@@ -260,52 +320,8 @@ void plotLine_MLD_all(Array1D(ld) color,Array1D(ld) p1,Array1D(ld) p2,ld stepsiz
         plotLine_MLD_modified(color,p1,p2,stepsize,{1,0,0,-1},see_points);// plot x,-y
     }//octate 8
 }
-class Figure{
-private:
-    /* data */
-public:
-    void Point(Array1D(ld) color,Array2D(ld) array,ld point_size=5,bool see_points=false){
-        glPointSize(point_size);
-        glBegin(GL_POINTS);//rect outline
-            glColor3f(color[0],color[1], color[2]);//color of outline of rect
-            for ( int i = 0; i < array.size(); i++ ){
-                glVertex2f(array[i][0],array[i][1]);
-            }
-        glEnd();
-        // glFlush();
-        if(see_points){
-            print2D(array);
-        }
-    }
-    void Line(Array1D(ld) color,Array2D(ld) array,ld line_width=5,bool see_points=false){
-        glLineWidth(line_width);
-        glBegin(GL_LINES);//rect outline
-            glColor3f(color[0],color[1], color[2]);//color of outline of rect
-            for ( int i = 0; i < array.size(); i++ ){
-                glVertex2f(array[i][0],array[i][1]);
-                // glVertex2fv((GLfloat *)&array[i]);
-            }
-        glEnd();
-        // glFlush();
-        if(see_points){
-            print2D(array);
-        }
-    }
-    void Polygon(Array1D(ld) color,Array2D(ld) array,bool see_points=false){
-        glBegin(GL_POLYGON);//rect outline
-            glColor3f(color[0],color[1], color[2]);//color of outline of rect
-            for ( int i = 0; i < array.size(); i++ ){
-                glVertex2f(array[i][0],array[i][1]);
-            }
-        glEnd();
-        // glFlush();
-        if(see_points){
-            print2D(array);
-        }
-    }
-};
 
-void Plot_line(Array1D(ld) p1,Array1D(ld) p2,Array1D(ld) color,ld stepsize,ld precision){
+void plotLine_custom(Array1D(ld) p1,Array1D(ld) p2,Array1D(ld) color,ld stepsize,ld precision){
     int c=0;
     LinearEquation myeq(p1,p2);
     ld prec=(stepsize*precision);
@@ -326,6 +342,100 @@ void Plot_line(Array1D(ld) p1,Array1D(ld) p2,Array1D(ld) color,ld stepsize,ld pr
     }
 }
 
+void plorCircle_MLD(Array1D(ld) color,Array1D(ld) center,ld radius,ld stepsize,bool see_points=false){
+        // only for 2 octant
+    ld x=0,y=radius,d=1-radius;
+    // draw circle
+    plotPoint_single(color,x,y,stepsize,see_points);
+    while (y>x){
+        if(d<0){
+            d=d+2*x+3;
+        }
+        else{
+            d=d+2*(x-y)+5;
+            y=y-1;
+        }
+        x=x+1;
+        // draw circle
+        plotPoint_single(color,x,y,stepsize,see_points);
+    }
+}
+void plotCircle_MLD_modified(Array1D(ld) color,Array1D(ld) center,ld radius,ld stepsize,Array1D(ld) toggler,bool see_points=false){
+        // only for 2 octant
+    ld x=0,y=radius,d=1-radius;
+    // draw circle
+    plotPoint_single(color,
+    (toggler[0]*x+toggler[1]*y+   (abs(toggler[0])*center[0]+abs(toggler[1])*center[1])  ),
+    (toggler[2]*x+toggler[3]*y+   (abs(toggler[2])*center[0]+abs(toggler[3])*center[1])  ),
+    stepsize,see_points);
+    while (y>x){
+        if(d<0){
+            d=d+2*x+3;
+        }
+        else{
+            d=d+2*(x-y)+5;
+            y=y-1;
+        }
+        x=x+1;
+        // draw circle
+        plotPoint_single(color,
+        (toggler[0]*x+toggler[1]*y+   (abs(toggler[0])*center[0]+abs(toggler[1])*center[1])  ),
+        (toggler[2]*x+toggler[3]*y+   (abs(toggler[2])*center[0]+abs(toggler[3])*center[1])  ),
+        stepsize,see_points);
+    }
+}
+void plotCircle_MLD_all(Array1D(ld) color,Array1D(ld) center,ld radius,ld stepsize,bool see_points=false){
+    
+    plotCircle_MLD_modified(color,center,radius,stepsize,{0,1,1,0},see_points);//1 octate
+    plotCircle_MLD_modified(color,center,radius,stepsize,{1,0,0,1},see_points);//2 octate
+
+    plotCircle_MLD_modified(color,center,radius,stepsize,{-1,0,0,1},see_points);// 3 octate
+    plotCircle_MLD_modified(color,center,radius,stepsize,{0,-1,1,0},see_points);// 4 octate
+
+    plotCircle_MLD_modified(color,center,radius,stepsize,{0,-1,-1,0},see_points);// 5 octate
+    plotCircle_MLD_modified(color,center,radius,stepsize,{-1,0,0,-1},see_points);// 6 octate
+
+    plotCircle_MLD_modified(color,center,radius,stepsize,{1,0,0,-1},see_points);// 7 octate
+    plotCircle_MLD_modified(color,center,radius,stepsize,{0,1,-1,0},see_points);// 8 octate
+}
+void plotEllipse_MLD(Array1D(ld) color,Array1D(ld) center,ld a,ld b,ld stepsize,bool see_points=false){
+    int x=0,y=b;
+    int sa=a*a,sb=b*b;
+    int d1=sb-sa*b+0.25*sa;
+    //draw
+    plotPoint_quad(color,center,x,y,stepsize,see_points);
+    
+    while(sa*(y-0.5)>sb*(x+1)){
+        if(d1<0){
+            d1+=sb*((x<<1)+3);
+        }
+        else{
+            d1+=sb*((x<<1)+3)+sa*(-(y<<1)+2);
+            y--;
+        }
+        x++;
+        // draw
+        plotPoint_quad(color,center,x,y,stepsize,see_points);
+        
+    }
+    int d2=sb*(x+0.5)*(x+0.5)+sa*(y-1)*(y-1)-sa*sb;
+    //draw
+    plotPoint_quad(color,center,x,y,stepsize,see_points);
+    
+    while(y>0){
+        if(d2<0){
+            d2+=sb*((x<<1)+2)+sa*(-(y<<1)+3);
+            x++;
+        }
+        else{
+            d2+=sb*(-(y<<1)+3);
+        }
+        y--;
+        // draw
+        plotPoint_quad(color,center,x,y,stepsize,see_points);
+    }
+
+}
 void display1(void){
     init(steelblue);
     Figure A;
