@@ -27,7 +27,21 @@ Array1D(ld) rgb(int r, int g, int b){
     f.push_back((double)b/255.0);
     return f;
 }
-
+template <typename T>
+T customScaling(T x,Array1D(ld) inputRange,Array1D(ld) outputRange){
+    ld tmp1=-inputRange[0];
+    // inputRange[0]+=tmp1;
+    inputRange[1]+=tmp1;
+    ld tmp2=-outputRange[0];
+    // outputRange[0]+=tmp2;
+    outputRange[1]+=tmp2;
+    x+=tmp1;
+    x=x/(inputRange[1]);
+    x*=outputRange[1];
+    x-=tmp2;
+    return x;
+    // return ((x/(inputRange[1]-inputRange[0]))*(outputRange[1]-outputRange[0]))+outputRange[0];
+}
 void init(Array1D(ld) color ,ld alpha=1.0){
     glClearColor(color[0], color[1], color[2], 1); //Window Background Colour
     // glClearColor(0.5, 0.5, 0.5,1); //Window Background Colour
@@ -35,14 +49,37 @@ void init(Array1D(ld) color ,ld alpha=1.0){
     glFlush();
 }
 
+
 void reshape_callback(int w, int h){
+    int my_w=glutGet(GLUT_WINDOW_WIDTH),
+    my_h=glutGet(GLUT_WINDOW_HEIGHT);
+    window_size[0]=my_h;
+    window_size[1]=my_w;
     glViewport(
-        ((glutGet(GLUT_WINDOW_WIDTH)-viewport_size[1])/2),//width
-        ((glutGet(GLUT_WINDOW_HEIGHT)-viewport_size[0])/2),//height
+        ((my_w-viewport_size[1])/2),//width
+        ((my_h-viewport_size[0])/2),//height
         viewport_size[1],//width
         viewport_size[0]//height
     );
+    glutPostRedisplay();
 }
+void mouse_callback(int button, int state, int x, int y){{
+    if(button==GLUT_LEFT_BUTTON && state==GLUT_DOWN){
+        check=true;
+        mx = x-(window_size[1]/2.0);
+        my = -y+(window_size[0]/2.0);
+        // scalling window size to PPI
+        mx=(mx/viewport_size[1])*PPI*2;
+        my=(my/viewport_size[0])*PPI*2;
+        // cout<<"("<<mx<<","<<my<<")"<<endl;
+    glutPostRedisplay();
+    }
+    else if(button==GLUT_RIGHT_BUTTON && state==GLUT_DOWN){//undo(clear)the drawing
+        init(steelblue);
+        check = false;
+    glutPostRedisplay();
+    }
+}}
 
 void print3D(Array3D(ld) a){
     cout<<"[";
@@ -83,6 +120,28 @@ void print1D(Array1D(ld) a){
         cout<<a[i]<<",";
     }
     cout<<"\b]"<<endl;
+}
+Array1D(ld) getPixelColor(Array1D(ld) p,bool see_point=false){
+    unsigned char pixel[4];
+    if(see_point){
+    print1D({
+        // p[0],
+        // p[1],
+
+        // p[0]+(window_size[1]/2),
+        // p[1]+(window_size[0]/2),
+
+        customScaling(p[0],{-PPI,PPI},{0,(ld)window_size[1]}),
+        customScaling(p[1],{-PPI,PPI},{0,(ld)window_size[0]})
+        });
+    }
+    glReadPixels(
+        customScaling(p[0],{-PPI,PPI},{0,(ld)window_size[1]}),
+        customScaling(p[1],{-PPI,PPI},{0,(ld)window_size[0]}),
+        
+        stepsize,stepsize,GL_RGB,GL_UNSIGNED_BYTE,pixel);
+    // return rgb((ld)pixel[0],(ld)pixel[1],(ld)pixel[2]);
+    return {(ld)pixel[0],(ld)pixel[1],(ld)pixel[2]};
 }
 
 class LinearEquation{
@@ -182,6 +241,19 @@ void plotLine(Array1D(ld) color,Array2D(ld) pointsArray,ld line_width=5,bool see
     // glFlush();
     if(see_points){print2D(pointsArray);}
 }
+void plotLineLoop(Array1D(ld) color,Array2D(ld) pointsArray,ld line_width=5,bool see_points=false){
+    /* The function plot with the points in range of -PPI to PPI . Here PPI is the Global Variable*/
+    glLineWidth(line_width);
+    glBegin(GL_LINE_LOOP);//rect outline
+        glColor3f(color[0],color[1], color[2]);//color of outline of rect
+        for ( int i = 0; i < pointsArray.size(); i++ ){
+            glVertex2f(pointsArray[i][0]/PPI,pointsArray[i][1]/PPI);
+            // glVertex2fv((GLfloat *)&pointsArray[i]);
+        }
+    glEnd();
+    // glFlush();
+    if(see_points){print2D(pointsArray);}
+}
 void plotPolygon(Array1D(ld) color,Array2D(ld) pointsArray,bool see_points=false){
     /* The function plot with the points in range of -PPI to PPI . Here PPI is the Global Variable*/
     glBegin(GL_POLYGON);//rect outline
@@ -192,6 +264,28 @@ void plotPolygon(Array1D(ld) color,Array2D(ld) pointsArray,bool see_points=false
     glEnd();
     // glFlush();
     if(see_points){print2D(pointsArray);}
+}
+void plotBoundary_box(Array2D(ld) myfigure,ld line_width=5,bool see_points=false){
+    
+    ld min_x=myfigure[0][0],
+    min_y=myfigure[0][1],
+    max_x=myfigure[0][0],
+    max_y=myfigure[0][1];
+
+    for(int i=0;i<myfigure.size();i++){//for x
+        if(myfigure[i][0]<min_x){min_x=myfigure[i][0];}
+        if(myfigure[i][0]>max_x){max_x=myfigure[i][0];}
+        if(myfigure[i][1]<min_y){min_y=myfigure[i][1];}
+        if(myfigure[i][1]>max_y){max_y=myfigure[i][1];}
+    }
+    // // bounding Box
+    plotLineLoop(blue,{
+        {max_x,max_y},
+        {min_x,max_y},
+
+        {min_x,min_y},
+        {max_x,min_y}
+    },line_width,see_points);
 }
 
 void plotPoint_single(Array1D(ld) color,ld x,ld y,ld stepsize,bool see_points=false){
@@ -342,7 +436,7 @@ void plotLine_custom(Array1D(ld) p1,Array1D(ld) p2,Array1D(ld) color,ld stepsize
     }
 }
 
-void plorCircle_MLD(Array1D(ld) color,Array1D(ld) center,ld radius,ld stepsize,bool see_points=false){
+void plotCircle_MLD(Array1D(ld) color,Array1D(ld) center,ld radius,ld stepsize,bool see_points=false){
         // only for 2 octant
     ld x=0,y=radius,d=1-radius;
     // draw circle
@@ -436,6 +530,133 @@ void plotEllipse_MLD(Array1D(ld) color,Array1D(ld) center,ld a,ld b,ld stepsize,
     }
 
 }
+void fillcolor_BF4(Array1D(ld) p,Array1D(ld) fillcolor,Array1D(ld) boundarycolor,ld thickness=5,bool see_points=false){
+    Array1D(ld) color=getPixelColor({p[0],p[1]});
+    // cout<<(color!=fillcolor && color!=boundarycolor)<<endl;
+    bool condition =
+    color[0]!=fillcolor[0] && 
+    color[1]!=fillcolor[1] && 
+    color[2]!=fillcolor[2] &&
+    color[0]!=boundarycolor[0] && 
+    color[1]!=boundarycolor[1] && 
+    color[2]!=boundarycolor[2];
+    // if((color!=fillcolor) && (color!=boundarycolor)){
+    if(condition){
+        Point(fillcolor,{{p[0],p[1]}},thickness,see_points);//filling desired color
+        glFlush();
+        fillcolor_BF4({p[0]+stepsize,p[1]},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF4({p[0]-stepsize,p[1]},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF4({p[0],p[1]+stepsize},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF4({p[0],p[1]-stepsize},fillcolor,boundarycolor,thickness,see_points);
+    }
+    // cout<<"end"<<endl;
+}
+void fillcolor_BF8(Array1D(ld) p,Array1D(ld) fillcolor,Array1D(ld) boundarycolor,ld thickness=5,bool see_points=false){
+    Array1D(ld) color=getPixelColor({p[0],p[1]});
+    bool condition =
+    color[0]!=fillcolor[0] && 
+    color[1]!=fillcolor[1] && 
+    color[2]!=fillcolor[2] &&
+    color[0]!=boundarycolor[0] && 
+    color[1]!=boundarycolor[1] && 
+    color[2]!=boundarycolor[2];
+    // if((color!=fillcolor) && (color!=boundarycolor)){
+    if(condition){
+        Point(fillcolor,{{p[0],p[1]}} ,thickness,see_points);
+        glFlush();
+        fillcolor_BF8({p[0]+stepsize,p[1]},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0],p[1]+stepsize},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0]-stepsize,p[1]},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0],p[1]-stepsize},fillcolor,boundarycolor,thickness,see_points);
+
+        fillcolor_BF8({p[0]+stepsize,p[1]+stepsize},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0]+stepsize,p[1]-stepsize},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0]-stepsize,p[1]+stepsize},fillcolor,boundarycolor,thickness,see_points);
+        fillcolor_BF8({p[0]-stepsize,p[1]-stepsize},fillcolor,boundarycolor,thickness,see_points);
+    }
+}
+void fillcolor_floodfill(Array1D(ld) p,Array1D(ld) oldcolor,Array1D(ld) newcolor,ld thickness=5,bool see_points=false){
+    Array1D(ld) color=getPixelColor({p[0],p[1]});
+    bool condition =
+    color[0]==oldcolor[0] && 
+    color[1]==oldcolor[1] && 
+    color[2]==oldcolor[2];
+    // if(color==oldcolor){
+    if(condition){
+        Point(newcolor,{{p[0],p[1]}},thickness,see_points);
+        glFlush();
+        fillcolor_floodfill({p[0]+stepsize,p[1]},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0]-stepsize,p[1]},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0],p[1]+stepsize},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0],p[1]-stepsize},oldcolor,newcolor,thickness,see_points);
+
+        fillcolor_floodfill({p[0]+stepsize,p[1]+stepsize},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0]+stepsize,p[1]-stepsize},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0]-stepsize,p[1]-stepsize},oldcolor,newcolor,thickness,see_points);
+        fillcolor_floodfill({p[0]-stepsize,p[1]+stepsize},oldcolor,newcolor,thickness,see_points);
+    }
+}
+void display2(void){
+    init(steelblue);
+    Polygon(gainsboro,{{PPI,PPI},{PPI,-PPI},{-PPI,-PPI},{-PPI,PPI}});//background
+    //for stepsize 
+    Line(black,{//axes
+            // {PPI,0},{-PPI,0},
+            // {0,PPI},{0,-PPI},
+
+            // {PPI,0},{-0,0},
+            // {0,PPI},{0,-0},
+            
+            // {PPI,10},{-0,10},
+            // {10,PPI},{10,-0}
+        },1.5);
+
+    Array2D(ld) myfigure={{20,25},{-10,-30},{-50,70}};
+    LineLoop(black,myfigure,10);
+    
+     
+    if(check){ 
+        // print1D({mx,my});
+        // Array1D(ld) pixel=getPixelColor({mx,my});
+        // Point(rgb((ld)pixel[0],(ld)pixel[1],(ld)pixel[2]),{{mx,my}},1);
+        // BF4({mx,my},green,black,5);
+        // floodfill({mx,my},getPixelColor({mx,my}),green,5);
+        BF8({mx,my},green,black,5);
+    }
+    glFlush();  // flushes the frame buffer to the screen
+}
+
+void display3(void){
+    init(steelblue);
+    // Polygon(lightpink,{{PPI,PPI},{PPI,-PPI},{-PPI,-PPI},{-PPI,PPI}});//background
+    Polygon(gainsboro,{{PPI,PPI},{PPI,-PPI},{-PPI,-PPI},{-PPI,PPI}});//background
+    Line(black,{//axes
+            {PPI,0},{-PPI,0},
+            {0,PPI},{0,-PPI},
+        
+            {PPI,10},{-0,10},
+            {10,PPI},{10,-0}
+        },1.5);
+    Array2D(ld) myfigure={{20,25},{-10,-30},{-50,70}};
+    LineLoop(black,myfigure,5);
+    glFlush();
+    // if(check){ 
+    for(ld j=-PPI;j<=PPI;j+=.525){
+        for(ld i=-PPI;i<=PPI;i+=.525){
+            // Point(red,{{mx,my}});
+            // Array1D(ld) pixel=getPixelColor({i,j},true);
+            Array1D(ld) pixel=getPixelColor({i,j});
+            // print1D({(ld)pixel[0],(ld)pixel[1],(ld)pixel[2]});
+            // print1D({i,j});
+            Point(rgb((ld)pixel[0],(ld)pixel[1],(ld)pixel[2]),{{i,j}},2);
+            // Point(green,{{i,j}},3);
+        }
+        glFlush();
+    }
+
+    glFlush();
+}
+
 void display1(void){
     init(steelblue);
     Figure A;
@@ -468,9 +689,7 @@ void display1(void){
             {round(x/prec)*(prec),round(y/prec)*(prec)},
             {(round(x/prec)+1*(x/fabs(x)))*(prec),round(y/prec)*(prec)},
             {(round(x/prec)+1*(x/fabs(x)))*(prec),(round(y/prec)+1*(y/fabs(y)))*(prec)},
-            {round(x/prec)*(prec),(round(y/prec)+1*(y/fabs(y)))*(prec)},
-
-            
+            {round(x/prec)*(prec),(round(y/prec)+1*(y/fabs(y)))*(prec)},            
         });
     }
     glFlush();
