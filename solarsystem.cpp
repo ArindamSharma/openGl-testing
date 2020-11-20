@@ -324,6 +324,7 @@ void display1(void){
         glFlush();
     }
 }
+
 void display3(void){
     init(rgb(13, 23, 71));
     cout.precision(10);

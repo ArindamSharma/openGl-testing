@@ -20,7 +20,7 @@ using namespace std;
 #define intrand (rand()%prec)
 using namespace std;
 
-int window_size[]={768,1024};//{height,width}
+int window_size[]={864,1152};//{height,width}
 int viewport_size[]={768,1024};//{height,width}
 
 template <typename T>
@@ -43,7 +43,6 @@ Array1D(ld) rgb(int r, int g, int b){
     f.push_back((double)b/255.0);
     return f;
 }
-
 Array1D(ld) rgb_invert(Array1D(ld) color){
     Array1D(ld) f=color;
     f[0]=1-f[0];
@@ -51,7 +50,6 @@ Array1D(ld) rgb_invert(Array1D(ld) color){
     f[2]=1-f[2];
     return f;
 }
-
 Array1D(ld) rgb_brightness(Array1D(ld) &color,ld brigntness_percentage){
     color[0]*=brigntness_percentage/100;
     color[1]*=brigntness_percentage/100;
@@ -628,16 +626,22 @@ void textRendering(string str,Array1D(ld) location,Array1D(ld) color,ld mysize=8
     }
 }
 void display1(void){
-    init(grey);
+    init(silver);
+    plotPolygon(forestgreen,{
+        {(ld)viewport_size[0],(ld)viewport_size[1]},
+        {(ld)-viewport_size[0],(ld)viewport_size[1]},
+        {(ld)-viewport_size[0],(ld)-viewport_size[1]},
+        {(ld)viewport_size[0],(ld)-viewport_size[1]},
+    });
     ld textsize=4;
     textRendering("LABENDSEM",{0,30},crimson,textsize);
     textRendering("TEXTRENDERING",{0,20},black,textsize);
     textRendering("PRESENTATIONBY",{0,10},yellow,textsize);
     textRendering("ARINDAMSHARMA",{0,0},lightblue,textsize);
     textRendering("TA",{0,-10},cyan,textsize);
-    textRendering("JOSHIPRATEEK",{0,-20},green,textsize);
+    textRendering("JOSHIPRATEEK",{0,-20},darkgreen,textsize);
     textRendering("GUIDEDBY",{0,-30},cyan,textsize);
-    textRendering("PROFMASILAMANISIR",{0,-40},green,textsize);
+    textRendering("PROFMASILAMANISIR",{0,-40},darkgreen,textsize);
     glFlush();
 }
 int main(int argc,char** argv){
