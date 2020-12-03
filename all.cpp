@@ -626,7 +626,7 @@ Array2D(ld) getcirclepoints(Array1D(ld) origin,ld r,Array1D(ld) angles,ld precis
     }
     return circlepoints;
 }
-Array2D(ld) getellipse(Array1D(ld) origin, ld a,ld b ,ld precision=0.8,ld thick=5,bool see=false){
+Array2D(ld) getellipsepoints(Array1D(ld) origin, ld a,ld b ,ld precision=0.8,ld thick=5,bool see=false){
     Array2D(ld) result;
     for(ld i=0;i<360;i+=precision){
         result.push_back({(origin[0]+a*cos(i deg)),(origin[1]+b*sin(i deg))});
@@ -795,7 +795,7 @@ Array2D(ld) font_letter(char l,ld precision=0.1){
     }
     else if(temp==83){
         // cout<<"the Letter used is S"<<endl;
-        for(ld i=22.5;i<90;i+=precision*75){letter.push_back({(0.5+2*cos(i deg)),(2+2*sin(i deg))});}//semicircle upper right
+        for(ld i=45;i<90;i+=precision*75){letter.push_back({(0.5+2*cos(i deg)),(2+2*sin(i deg))});}//semicircle upper right
         for(ld x=0.5;x>-0.5;x-=precision*2){ letter.push_back({x,4});}//horizontal top
         for(ld i=90;i<270;i+=precision*75){letter.push_back({(-0.5+1.5*cos(i deg)),(2.5+1.5*sin(i deg))});}//semicircle upper left
         for(ld x=-0.5;x<0.5;x+=precision*2){ letter.push_back({x,1});}//horizontal middle
@@ -989,16 +989,16 @@ void textRendering(string str,Array1D(ld) location,Array1D(ld) color,ld mysize=8
         strsize+=mysize*space_btw_letter;
         ld fontthickness=mysize/2;
         Array2D(ld) l=scale(font_letter(str[i],1.25/mysize),mysize);
-        Array1D(ld) origin={location[0]+strsize,location[1]*mysize};
-        for(ll j=0;j<l.size();j++){//letter outline
-            plotPolygon(black, getcirclepoints({origin[0]+l[j][0],origin[1]+l[j][1]},fontthickness,{0,360},0.5) );
-            // glFlush();
-        }
+        Array1D(ld) origin={location[0]*mysize+strsize,location[1]*mysize};
+        // for(ll j=0;j<l.size();j++){//letter outline
+        //     plotPolygon(black, getcirclepoints({origin[0]+l[j][0],origin[1]+l[j][1]},fontthickness,{0,360},0.5) );
+        //     glFlush();
+        // }
         for(ll j=0;j<l.size();j++){//actual letter
             plotPolygon(color, getcirclepoints({origin[0]+l[j][0],origin[1]+l[j][1]},fontthickness-mysize/10,{0,360},0.5) );
-            // glFlush();
+            glFlush();
         }
-        glFlush();
+        // glFlush();
     }
 }
 
@@ -1018,7 +1018,6 @@ void circle(Array1D(ld) color,Array1D(ld) origin, ld r ,ld precision=0.8,ld thic
     }
 }
 void sphere(Array1D(ld) color,Array1D(ld) origin,ld radius,int vlines=5,int hlines=5,ld precision =0.8,ld thickness=2.5,bool see=false){
-    Array2D(ld) result;
     circle(color,origin,radius,precision,thickness,see);//circumfrence
     ld temp;
     //vertical lines
@@ -1047,6 +1046,36 @@ void sphere(Array1D(ld) color,Array1D(ld) origin,ld radius,int vlines=5,int hlin
         ellipse(color,{origin[0],origin[1]+y},x,temp/3,precision,thickness,see);
     }
 }
+
+// void getspherepoints(Array1D(ld) origin,ld radius,int vlines=5,int hlines=5,ld precision =0.8,ld thickness=2.5,bool see=false){
+//     Array2D(ld) result;
+//     // circle(color,origin,radius,precision,thickness,see);//circumfrence
+//     for(ld i=0;i<360;i+=precision){result.push_back({(origin[0]+radius*cos(i deg)),(origin[1]+radius*sin(i deg))});}//circumfrence
+//     ld temp;
+//     //vertical lines
+//     if((vlines%2)!=0){//odd
+//         vlines=(vlines-1)/2;
+//         plotLine(color,{{origin[0]+0,origin[1]+radius},{origin[0]+0,origin[1]-radius}},thickness/2,see);//vertical line
+//         ld temp=radius/(vlines+1);
+//         for(int i=temp;i<radius;i+=temp){
+//             ellipse(color,origin,i,radius,precision,thickness,see);
+//         }
+//     }
+//     else{
+//         temp=(2*radius)/(vlines+1);
+//         for(ld i=temp/2;i<radius;i+=temp){
+//             ellipse(color,origin,i,radius,precision,thickness,see);
+//         }
+//     }
+//     //horizontal lines
+//     temp=(2*radius)/(hlines+1);
+//     ld sradius=radius*radius;
+//     for(ld y=temp-radius;y<radius;y+=temp){
+//         ld x=sqrt(sradius-(y*y));
+//         // Line(color,{  {origin[0]-x,origin[1]+y},{origin[0]+x,origin[1]+y}   },thickness/2,see);
+//         ellipse(color,{origin[0],origin[1]+y},x,temp/3,precision,thickness,see);
+//     }
+// }
 
 void displaysolarsystem(void){
     init(rgb(0, 3, 51));
@@ -1168,21 +1197,20 @@ void displaysolarsystem(void){
 }
 void displaytext(void){
     init(silver);
-    plotPolygon(forestgreen,{
-        {(ld)viewport_size[0],(ld)viewport_size[1]},
-        {(ld)-viewport_size[0],(ld)viewport_size[1]},
-        {(ld)-viewport_size[0],(ld)-viewport_size[1]},
-        {(ld)viewport_size[0],(ld)-viewport_size[1]},
-    });
-    ld textsize=4;
-    textRendering("LABENDSEM",{0,30},crimson,textsize);
-    textRendering("TEXTRENDERING",{0,20},black,textsize);
-    textRendering("PRESENTATIONBY",{0,10},yellow,textsize);
-    textRendering("ARINDAMSHARMA",{0,0},lightblue,textsize);
-    textRendering("TA",{0,-10},cyan,textsize);
-    textRendering("JOSHIPRATEEK",{0,-20},darkgreen,textsize);
-    textRendering("GUIDEDBY",{0,-30},cyan,textsize);
-    textRendering("PROFMASILAMANISIR",{0,-40},darkgreen,textsize);
+    plotPolygon(grey,{{(ld)viewport_size[0],(ld)viewport_size[1]},{(ld)-viewport_size[0],(ld)viewport_size[1]},{(ld)-viewport_size[0],(ld)-viewport_size[1]},{(ld)viewport_size[0],(ld)-viewport_size[1]}});
+    ld textsize=20;
+    // textRendering("LABENDSEM",{0,30},crimson,textsize);
+    // textRendering("TEXTRENDERING",{0,20},black,textsize);
+    // textRendering("PRESENTATIONBY",{0,10},yellow,textsize);
+    // textRendering("ARINDAMSHARMA",{0,0},lightblue,textsize);
+    // textRendering("TA",{0,-10},cyan,textsize);
+    // textRendering("JOSHIPRATEEK",{0,-20},darkgreen,textsize);
+    // textRendering("GUIDEDBY",{0,-30},cyan,textsize);
+    // textRendering("PROFMASILAMANISIR",{0,-40},darkgreen,textsize);
+
+    textRendering("GRAPHICS",{-2,5},lightblue,textsize);
+    textRendering("ARINDAM",{-2,-5},lightblue,textsize);
+    // textRendering("CED17I022",{-2,-15},lightblue,textsize);
     glFlush();
 }
 void display1(void){
